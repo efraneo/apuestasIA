@@ -2,60 +2,49 @@ import streamlit as st
 import database as db
 from datetime import datetime
 
-# Inicializar Base de Datos
 db.init_db()
-
-# Configuración de página
 st.set_page_config(page_title="AI Bet Generator PRO", page_icon="🤖", layout="wide")
 
 def main():
-    # Si no está logueado, mostrar pantalla de login/registro
     if 'logged_in' not in st.session_state or not st.session_state.logged_in:
         import auth
         auth.show_auth()
         return
 
     user = st.session_state.user
-    perfil = user[8] # Índice de 'perfil' en la BD
-    fecha_final_str = user[7] # Índice de 'fecha_final'
-    estado = user[11] # Índice de 'estado'
+    # NUEVOS ÍNDICES por la columna 'nombre': user[2]=nombre, user[3]=usuario, user[8]=ffinal, user[9]=perfil, user[13]=membresia
+    nombre_user = user[2]
+    perfil = user[9]
+    fecha_final_str = user[8]
+    membresia = user[13]
 
-    # Verificar membresía (si no es admin y la fecha final ya pasó)
     if perfil != 'administrador' and fecha_final_str != 'NA':
         try:
             fecha_final = datetime.strptime(fecha_final_str, "%Y-%m-%d")
-            if datetime.now() > fecha_final and user[12] == 'gratis': # user[12] = membresia
+            if datetime.now() > fecha_final and membresia == 'gratis':
                 import payment
                 st.sidebar.button("Cerrar Sesión", on_click=logout)
                 payment.show_payment()
                 return
-        except:
-            pass # Si la fecha está mal, dejamos pasar por ahora
+        except: pass
 
-    # Menú lateral
-    st.sidebar.title(f"👋 Hola, {user[2]}")
-    if st.sidebar.button("🚪 Cerrar Sesión"):
-        logout()
+    # Mostrar Nombre y Rol (administrador) en el menú
+    st.sidebar.title(f"👋 Hola, {nombre_user}")
+    st.sidebar.markdown(f"**Rol:** {perfil.capitalize()}")
+    if st.sidebar.button("🚪 Cerrar Sesión"): logout()
 
-    # Lógica de visualización según perfil
     if perfil == 'administrador':
         import dashboard
         import betting_app
-        
         tab1, tab2 = st.tabs(["📊 Panel Admin", "🤖 Bot de Apuestas"])
-        with tab1:
-            dashboard.show_dashboard()
-        with tab2:
-            betting_app.show_betting_app()
+        with tab1: dashboard.show_dashboard()
+        with tab2: betting_app.show_betting_app()
     else:
         import betting_app
         import payment
-        
         tab1, tab2 = st.tabs(["🤖 Bot de Apuestas", "💳 Mi Suscripción"])
-        with tab1:
-            betting_app.show_betting_app()
-        with tab2:
-            payment.show_payment()
+        with tab1: betting_app.show_betting_app()
+        with tab2: payment.show_payment()
 
 def logout():
     st.session_state.logged_in = False

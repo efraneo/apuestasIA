@@ -33,6 +33,7 @@ def show_login():
         if submit:
             user = db.verify_login(usuario, clave)
             if user:
+                # El índice 11 sigue siendo 'estado' en la base de datos actualizada
                 if user[11] == 'pendiente': st.warning("Tu cuenta está en espera de aprobación por el Administrador.")
                 elif user[11] == 'rechazado': st.error("Tu cuenta ha sido rechazada.")
                 elif user[11] == 'aprobado':
@@ -53,6 +54,7 @@ def show_register():
     st.subheader("Registro (3 Días Gratis)")
     with st.form("register_form"):
         identificacion = st.text_input("Identificación (Cédula)")
+        nombre = st.text_input("Nombre Completo") # <--- AQUI SE AGREGO EL NOMBRE
         usuario = st.text_input("Usuario deseado")
         correo = st.text_input("Correo electrónico")
         fecha_nac = st.date_input("Fecha de Nacimiento", min_value=datetime(1950, 1, 1)).strftime("%Y-%m-%d")
@@ -60,7 +62,8 @@ def show_register():
         submit = st.form_submit_button("Registrarme")
         
         if submit:
-            if db.register_user(identificacion, usuario, clave, correo, fecha_nac):
+            # AQUI SE LE PASA EL 'nombre' A LA BASE DE DATOS
+            if db.register_user(identificacion, nombre, usuario, clave, correo, fecha_nac):
                 st.success("¡Registro exitoso! Tienes 3 días de prueba. El administrador debe aprobar tu cuenta.")
                 st.session_state.auth_view = 'login'; st.rerun()
             else: st.error("El usuario o identificación ya existe.")
